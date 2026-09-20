@@ -100,6 +100,12 @@ docker rm -f 9router
 # re-run the quick start command
 ```
 
+For a reproducible deployment, pin a numbered image tag instead of `latest`:
+
+```bash
+docker pull decolua/9router:0.5.81
+```
+
 ---
 
 # 🛠 For Developers
@@ -107,7 +113,7 @@ docker rm -f 9router
 ## Build image locally (test)
 
 ```bash
-cd app && docker build -t 9router .
+docker build -t 9router .
 
 docker run --rm -p 20128:20128 \
   -v "$HOME/.9router:/app/data" \
@@ -115,18 +121,43 @@ docker run --rm -p 20128:20128 \
   9router
 ```
 
+The Dockerfile uses the official Alpine and npm registries by default. Regional mirrors can be supplied when needed:
+
+```bash
+docker build \
+  --build-arg ALPINE_MIRROR=mirrors.aliyun.com \
+  --build-arg NPM_REGISTRY=https://registry.npmmirror.com/ \
+  -t 9router .
+```
+
 ## Publish (automatic via CI)
 
-Push a git tag `v*` → GitHub Actions builds multi-platform (amd64+arm64) and pushes to:
-- `ghcr.io/decolua/9router:v{version}` + `:latest`
-- `decolua/9router:v{version}` + `:latest`
+Push a semver git tag `vX.Y.Z` → GitHub Actions builds `linux/amd64` and `linux/arm64` on native runners, verifies the resulting manifest and `/api/health`, then publishes:
+
+- `ghcr.io/decolua/9router:X.Y.Z` + `:latest`
+- `decolua/9router:X.Y.Z` + `:latest`
+
+The `v` prefix is used only for the git tag; image tags omit it. `latest` is promoted only after both platform builds and the smoke test succeed. A failed or timed-out platform build therefore cannot move `latest`.
 
 ```bash
 # Use scripts/release.js (recommended)
 node scripts/release.js "Release title" "Notes"
 
 # Or manually
-git tag v0.4.x && git push origin v0.4.x
+git tag v0.5.81 && git push origin v0.5.81
 ```
 
-Workflow: `app/.github/workflows/docker-publish.yml`
+To republish an existing tag, run the `Build and Push Docker Image` workflow manually and provide the exact tag, for example `v0.5.81`, in the `release_tag` input.
+
+The workflow is tag-driven. Creating a git tag does not automatically create a GitHub Release, so the Releases page and the published package/image tags can be at different versions unless a maintainer creates a release separately.
+
+The upstream repository needs these repository secrets for Docker Hub publishing:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+GHCR publishing uses the workflow's `GITHUB_TOKEN` with package write permission. Forks can publish to their own GHCR namespace, but Docker Hub publication is restricted to the upstream `decolua/9router` repository.
+
+The optional repository variables `ALPINE_MIRROR` and `NPM_REGISTRY` can override the default package mirrors used by the CI Docker build.
+
+Workflow: `.github/workflows/docker-publish.yml`
