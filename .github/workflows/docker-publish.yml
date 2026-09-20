@@ -103,10 +103,20 @@ jobs:
       packages: write
 
     steps:
-      - name: Check out release tag
+      - name: Check out release source
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.tag }}
+          path: source
+          fetch-depth: 1
+
+      - name: Check out publishing Dockerfile
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: workflow
+          sparse-checkout: |
+            Dockerfile
           fetch-depth: 1
 
       - name: Set up Docker Buildx
@@ -123,7 +133,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: source
+          file: workflow/Dockerfile
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
           build-args: |
