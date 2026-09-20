@@ -100,7 +100,7 @@ docker rm -f 9router
 # re-run the quick start command
 ```
 
-For a reproducible deployment, pin a numbered image tag instead of `latest`:
+To pin a specific version instead of following `latest`, use a numbered image tag:
 
 ```bash
 docker pull decolua/9router:0.5.81
@@ -137,7 +137,7 @@ Push a Docker-safe semver git tag `vX.Y.Z` (or a prerelease such as `vX.Y.Z-rc.1
 - `ghcr.io/decolua/9router:X.Y.Z` + `:latest`
 - `decolua/9router:X.Y.Z` + `:latest`
 
-The `v` prefix is used only for the git tag; image tags omit it. A normal tag push always promotes `latest`, but only after both native platform builds, both platform health checks, manifest inspection, and the resolved-manifest smoke test succeed. A failed or timed-out platform build therefore cannot move `latest`.
+The `v` prefix is used only for the git tag; image tags omit it. A stable tag push promotes `latest`, but a prerelease tag such as `vX.Y.Z-rc.1` publishes only its numbered image by default. Prereleases require an explicit manual `promote_latest` opt-in. Promotion happens only after both native platform builds, both platform health checks, manifest inspection, and the resolved-manifest smoke test succeed. A failed or timed-out platform build therefore cannot move `latest`.
 
 The workflow rejects SemVer build metadata such as `v1.2.3+build.7` because the `+` form is not a valid Docker image tag. The git tag and both `package.json` versions must match exactly.
 
