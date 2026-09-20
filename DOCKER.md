@@ -149,6 +149,8 @@ git tag v0.5.81 && git push origin v0.5.81
 
 To republish an existing tag, run the `Build and Push Docker Image` workflow manually and provide the exact tag, for example `v0.5.81`, in the `release_tag` input.
 
+During recovery, the selected tag remains the application source while the Dockerfile from the workflow revision is used, so an older tag can be rebuilt with the current publishing fixes.
+
 The workflow is tag-driven. Creating a git tag does not automatically create a GitHub Release, so the Releases page and the published package/image tags can be at different versions unless a maintainer creates a release separately.
 
 The upstream repository needs these repository secrets for Docker Hub publishing:
