@@ -24,7 +24,6 @@ concurrency:
   queue: max
 
 env:
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}
   DOCKERHUB_IMAGE: decolua/9router
 
 jobs:
@@ -41,6 +40,7 @@ jobs:
       commit: ${{ steps.release.outputs.commit }}
       publish_dockerhub: ${{ steps.release.outputs.publish_dockerhub }}
       promote_latest: ${{ steps.release.outputs.promote_latest }}
+      ghcr_image: ${{ steps.release.outputs.ghcr_image }}
 
     steps:
       - name: Check out release tag
@@ -105,6 +105,7 @@ jobs:
 
           const commit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
           const publishDockerHub = process.env.REPOSITORY === "decolua/9router";
+          const ghcrImage = `ghcr.io/${process.env.REPOSITORY.toLowerCase()}`;
           const promoteLatest = process.env.EVENT_NAME === "push"
             || process.env.PROMOTE_LATEST_INPUT === "true";
           const output = process.env.GITHUB_OUTPUT;
@@ -114,6 +115,7 @@ jobs:
           fs.appendFileSync(output, `commit=${commit}\n`);
           fs.appendFileSync(output, `publish_dockerhub=${publishDockerHub}\n`);
           fs.appendFileSync(output, `promote_latest=${promoteLatest}\n`);
+          fs.appendFileSync(output, `ghcr_image=${ghcrImage}\n`);
 
           console.log(`Validated ${tag} at ${commit}`);
           console.log(`latest promotion: ${promoteLatest ? "enabled" : "disabled"}`);
@@ -124,6 +126,8 @@ jobs:
     needs: prepare
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
+    env:
+      GHCR_IMAGE: ${{ needs.prepare.outputs.ghcr_image }}
     strategy:
       fail-fast: false
       matrix:
@@ -243,6 +247,8 @@ jobs:
       - build
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      GHCR_IMAGE: ${{ needs.prepare.outputs.ghcr_image }}
     permissions:
       contents: read
       packages: write
